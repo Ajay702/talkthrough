@@ -78,7 +78,8 @@ Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for 
    The starter demos this repo's GitHub page, so `vfd make` works right away.
 2. **Point it at your app:** set `appUrl` in `demo.config.mjs`. For pages behind a login, run `vfd session admin`,
    log in in the window that opens, press Enter, and map parts to sessions: `sessions: { part1: 'admin' }`.
-3. **`vfd draft --about "..." [--pages /dashboard,/settings] [--minutes 3] [--session admin]`** writes the script,
+3. **`vfd draft --about "..." [--pages /dashboard,/account@customer] [--minutes 3] [--session admin]`** writes the script
+   (`@customer` looks at that page as the saved `customer` session),
    the spoken lines and the scenes, plus `DRAFT-NOTES.md` listing what to double-check.
 4. **`vfd studio`** to record your voice. Even with a cloned voice you record once: that's what gets cloned.
 5. **`vfd make`** → `demo/final/demo.mp4`. Or step by step: `vfd voice`, `vfd record`, `vfd render`.
@@ -130,6 +131,7 @@ Optional `export const open = { part2: async (page, h) => ... }` sets where a pa
   `demo/tts/eleven_voice_id.txt` to re-clone.
 - Check product names in the transcript (`demo/tts/<part>.words.json`) and spell them phonetically in `spoken-lines.json`.
 - If your demo sends emails or changes data, point it at a test account. Every `vfd make` runs the scenes for real.
+- Reset state between scenes by reloading the page. Many apps' "Clear filters" buttons leave the inputs filled.
 
 ## Contributing
 

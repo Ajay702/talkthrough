@@ -10,7 +10,7 @@ const HELP = `voice-first-demo: narrated product demo videos, voice first.
 
   vfd init                      add a demo/ folder (config, script, scenes, .env.example) to this project
   vfd draft --about "..."       let Claude/OpenAI look at your app and write script + scenes
-            [--pages /a,/b] [--minutes 3] [--session admin] [--force]
+            [--pages /a,/b@user] [--minutes 3] [--session admin] [--force]
   vfd studio                    teleprompter: record your voice, one part at a time (http://localhost:8766)
   vfd session <name> [<name>…]  log in once per user in real browser windows; the recorder reuses them
             [--url u] [--until file]  (--until: save when that file appears instead of on Enter)

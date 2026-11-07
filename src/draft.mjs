@@ -31,6 +31,7 @@ const API = `Scene helpers (all async unless noted), passed as h:
 - h.moveTo(page, x, y), h.moveToEl(page, locator): human cursor movement. h.hoverText(page, 'exact text'), h.hoverBadge(page, 'label') (right-most match).
 - h.clickEl(page, locator), h.typeHuman(page, locator, 'text'), h.scrollSmooth(page, y), h.scrollToText(page, 'text', offsetPx).
 - h.waitText(page, /regex/, seconds), h.caption(page, 'short caption shown at the top'), h.sleep(s), h.appUrl, h.W, h.H.
+Reset state between scenes by reloading the page (page.goto), not with the app's own "clear"/"reset" buttons, which often leave inputs filled. Find a specific record by searching for it by name rather than relying on list order.
 Use Playwright locators: page.getByText('x', { exact: true }), page.getByRole('button', { name: 'x' }), page.getByPlaceholder('x'), page.locator('select').filter({ hasText: 'x' }). Only target text/controls that appear in the page snapshots.`
 
 const FORMAT = `Return JSON with:
@@ -54,7 +55,7 @@ const SCHEMA = { type: 'object', additionalProperties: false, required: ['script
 
 function userContent(about, minutes, snaps) {
   const intro = `Make a ${minutes}-minute demo video of this app.\nWhat it is / what to show: ${about}\nApp URL: (use h.appUrl)\n\nPages:`
-  return [intro, ...snaps.map((s, i) => `\n--- Page ${i + 1}: ${s.url} (${s.title})\nHeadings: ${s.headings.join(' | ')}\nControls:\n${s.controls.join('\n')}\nVisible text:\n${s.text}`)].join('\n')
+  return [intro, ...snaps.map((s, i) => `\n--- Page ${i + 1}: ${s.url} (${s.title})${s.as ? ` [logged in as the saved "${s.as}" session]` : ''}\nHeadings: ${s.headings.join(' | ')}\nControls:\n${s.controls.join('\n')}\nVisible text:\n${s.text}`)].join('\n')
 }
 
 async function withClaude(model, about, minutes, snaps) {
@@ -90,13 +91,24 @@ export async function draft({ dir, config, about, pages = [], minutes = 3, sessi
   const useClaude = config.llm.provider === 'anthropic' || (config.llm.provider === 'auto' && process.env.ANTHROPIC_API_KEY)
   if (!useClaude && !process.env.OPENAI_API_KEY) throw new Error('Set ANTHROPIC_API_KEY (Claude) or OPENAI_API_KEY in demo/.env.')
 
-  const state = session ? join(p.state, `${session}.json`) : undefined
+  // Pages: "/admin" uses --session; "/dashboard@priya" looks at that page as the saved "priya" session.
   const browser = await chromium.launch({ executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined), headless: true })
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...(state && existsSync(state) ? { storageState: state } : {}) })
-  const page = await ctx.newPage()
+  const ctxs = {}
+  const pageFor = async (who) => {
+    if (!ctxs[who ?? '']) {
+      const state = who ? join(p.state, `${who}.json`) : undefined
+      if (state && !existsSync(state)) throw new Error(`No saved "${who}" session: run "vfd session ${who}"`)
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...(state ? { storageState: state } : {}) })
+      ctxs[who ?? ''] = await ctx.newPage()
+    }
+    return ctxs[who ?? '']
+  }
   const snaps = []
-  for (const u of [config.appUrl, ...pages.map((x) => (x.startsWith('http') ? x : config.appUrl.replace(/\/$/, '') + '/' + x.replace(/^\//, '')))]) {
-    console.log(`looking at ${u}`); snaps.push(await snapshot(page, u))
+  for (const spec of ['', ...pages]) {
+    const [path, who = session] = spec.split('@')
+    const u = path.startsWith('http') ? path : config.appUrl.replace(/\/$/, '') + (path ? '/' + path.replace(/^\//, '') : '')
+    console.log(`looking at ${u}${who ? ` as ${who}` : ''}`)
+    snaps.push({ ...(await snapshot(await pageFor(who), u)), as: who })
   }
   await browser.close()
 

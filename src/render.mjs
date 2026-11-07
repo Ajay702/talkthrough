@@ -50,7 +50,7 @@ export function render({ dir, config }) {
     outs.push(out)
   }
   const list = join(p.final, 'list.txt')
-  writeFileSync(list, outs.map((o) => `file '${o.replace(/'/g, "'\\''")}'`).join('\n'))
+  writeFileSync(list, outs.map((o) => `file '${o.replace(/\\/g, '/').replace(/'/g, "'\\''")}'`).join('\n'))
   const demo = join(p.final, 'demo.mp4')
   ff(['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', '-movflags', '+faststart', demo])
   unlinkSync(list)

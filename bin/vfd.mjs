@@ -3,8 +3,8 @@
 import { execFileSync } from 'node:child_process'
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { ensure, loadConfig, loadEnv, parseScript, paths, projectDir } from '../src/project.mjs'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { ensure, findBrowser, loadConfig, loadEnv, parseScript, paths, projectDir } from '../src/project.mjs'
 
 const HELP = `voice-first-demo: narrated product demo videos, voice first.
 
@@ -104,8 +104,9 @@ async function doctor(config) {
   const has = (bin) => { try { execFileSync(bin, ['-version'], { stdio: 'ignore' }); return true } catch { return false } }
   ok(Number(process.versions.node.split('.')[0]) >= 18, `Node ${process.versions.node}`, 'Node 18+ needed')
   ok(has('ffmpeg') && has('ffprobe'), 'ffmpeg + ffprobe', 'brew install ffmpeg  /  apt install ffmpeg')
-  const brave = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
-  ok(!!(config.browserPath || existsSync(brave)) || true, `browser: ${config.browserPath ?? (existsSync(brave) ? 'Brave' : "Playwright's Chromium (run: npx playwright install chromium)")}`)
+  const b = findBrowser(config)
+  ok(true, `browser: ${b ?? "Playwright's Chromium (if missing: npx playwright install chromium)"}`)
+  ok(['darwin', 'linux'].includes(process.platform), `platform: ${process.platform}`, 'Windows support is new and lightly tested; please report issues')
   const p = paths(dir)
   ok(existsSync(p.script), `script ${p.script}`, 'vfd init  or  vfd draft')
   if (existsSync(p.script)) {
@@ -113,7 +114,7 @@ async function doctor(config) {
     console.log(`  ${parts.map((x) => `${x.id}: ${x.sections.length} sections`).join(', ')}`)
     if (existsSync(p.scenes)) {
       try {
-        const mod = await import(`file://${p.scenes}?t=${Date.now()}`)
+        const mod = await import(pathToFileURL(p.scenes).href + `?t=${Date.now()}`)
         const def = mod.default(new Proxy({}, { get: () => () => {} }))
         for (const x of parts) { const s = def[x.id]; const n = s ? (Array.isArray(s) ? s : s.scenes).length : 0; ok(n === x.sections.length, `${x.id}: ${n} scenes for ${x.sections.length} sections`) }
       } catch (e) { ok(false, `scenes.mjs loads`, e.message.split('\n')[0]) }
@@ -123,7 +124,7 @@ async function doctor(config) {
   ok(true, `voice.provider: ${v}`)
   if (v === 'eleven') ok(!!process.env.ELEVENLABS_API_KEY, 'ELEVENLABS_API_KEY set', 'add it to demo/.env')
   if (v === 'openai') ok(!!process.env.OPENAI_API_KEY, 'OPENAI_API_KEY set', 'add it to demo/.env')
-  if (v !== 'own') ok(['part1', 'part2'].some((x) => existsSync(join(p.voice, `${x}.webm`))) || v === 'openai', 'studio recording (cloning needs your voice)', 'vfd studio')
+  if (v === 'eleven') ok(existsSync(join(p.tts, 'eleven_voice_id.txt')) || ['part1', 'part2'].some((x) => existsSync(join(p.voice, `${x}.webm`))), 'your voice to clone (a studio take, or an existing clone)', 'vfd studio')
   ok(!!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY), 'key for vfd draft (optional)', 'ANTHROPIC_API_KEY or OPENAI_API_KEY in demo/.env')
   for (const [part, s] of Object.entries(config.sessions)) ok(existsSync(join(p.state, `${s}.json`)), `${part} session "${s}"`, `vfd session ${s}`)
   const gi = join(dir, '.gitignore')

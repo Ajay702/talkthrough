@@ -6,9 +6,8 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { ensure, parseScript, paths } from './project.mjs'
+import { ensure, parseScript, paths, findBrowser } from './project.mjs'
 
-const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 
 // What the model sees of each page: visible text, controls it can target, and a screenshot.
 async function snapshot(page, url) {
@@ -92,7 +91,7 @@ export async function draft({ dir, config, about, pages = [], minutes = 3, sessi
   if (!useClaude && !process.env.OPENAI_API_KEY) throw new Error('Set ANTHROPIC_API_KEY (Claude) or OPENAI_API_KEY in demo/.env.')
 
   // Pages: "/admin" uses --session; "/dashboard@priya" looks at that page as the saved "priya" session.
-  const browser = await chromium.launch({ executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined), headless: true })
+  const browser = await chromium.launch({ executablePath: findBrowser(config), headless: true })
   const ctxs = {}
   const pageFor = async (who) => {
     if (!ctxs[who ?? '']) {

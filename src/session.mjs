@@ -6,16 +6,15 @@ import { chromium } from 'playwright'
 import { existsSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
-import { ensure, paths } from './project.mjs'
+import { ensure, paths, findBrowser } from './project.mjs'
 
-const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 
 export async function saveSession({ dir, config, names, url, until }) {
   const p = paths(dir)
   const windows = []
   for (const name of names) {
     const ctx = await chromium.launchPersistentContext(join(ensure(p.state), `.browser-${name}`), {
-      headless: false, viewport: null, executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined) })
+      headless: false, viewport: null, executablePath: findBrowser(config) })
     const page = ctx.pages()[0] ?? (await ctx.newPage())
     await page.goto(url ?? config.appUrl)
     await page.evaluate((n) => { document.title = `Log in as ${n}: ${document.title}` }, name).catch(() => {})

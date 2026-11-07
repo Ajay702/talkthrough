@@ -6,9 +6,8 @@ import { spawn } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { ensure, parseScript, paths, words } from './project.mjs'
+import { ensure, parseScript, paths, words, findBrowser } from './project.mjs'
 
-const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 const HIDDEN_PX = 81 // Brave's headless screencast leaves out the bottom 81 px; record taller and crop
 const WPM = 110
 const sleep = (s) => new Promise((r) => setTimeout(r, Math.max(0, s) * 1000))
@@ -111,7 +110,7 @@ export async function record({ dir, config, only, synced = false }) {
   const helpers = { at, hold, sleep, moveTo, moveToEl, scrollSmooth, scrollToText, clickEl, typeHuman, hoverText, hoverBadge, waitText, caption,
     get mouse() { return mouse }, W, H, appUrl: config.appUrl }
   const all = mod.default(helpers)
-  const browserPath = config.browserPath ?? process.env.BROWSER_PATH ?? (existsSync(BRAVE) ? BRAVE : undefined)
+  const browserPath = findBrowser(config)
   ensure(p.out)
 
   for (const part of parts) {

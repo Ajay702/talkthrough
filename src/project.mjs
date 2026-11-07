@@ -19,6 +19,20 @@ export const DEFAULTS = {
   llm: { provider: 'auto', anthropicModel: 'claude-opus-5-5', openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4.1' },
 }
 
+// Brave if installed (its headless screencast is what the recorder is tuned for), else Playwright's Chromium.
+export function findBrowser(config = {}) {
+  if (config.browserPath) return config.browserPath
+  if (process.env.BROWSER_PATH) return process.env.BROWSER_PATH
+  const env = process.env
+  const candidates = process.platform === 'win32'
+    ? [env.PROGRAMFILES, env['PROGRAMFILES(X86)'], env.LOCALAPPDATA].filter(Boolean)
+        .map((b) => join(b, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'))
+    : process.platform === 'darwin'
+      ? ['/Applications/Brave Browser.app/Contents/MacOS/Brave Browser']
+      : ['/usr/bin/brave-browser', '/usr/bin/brave', '/snap/bin/brave', '/opt/brave.com/brave/brave']
+  return candidates.find((c) => existsSync(c)) // undefined → Playwright's own Chromium
+}
+
 export function projectDir(flags = {}) {
   return resolve(flags.dir ?? process.env.VFD_DIR ?? 'demo')
 }

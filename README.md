@@ -1,5 +1,10 @@
 # voice-first-demo
 
+<p align="center">
+  <a href="docs/demo.mp4"><img src="docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
+  <sub>▶ <a href="docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
+</p>
+
 **Narrated product demo videos for your app, without the editing.** Hiring assignments, launches,
 client handoffs and PR reviews all ask for "a short video walking through it". This makes one from your
 running app: you talk (or your cloned voice does), and the screen recording builds itself around your words.
@@ -60,13 +65,19 @@ timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock
 
 ## Install
 
-Node 18+ and ffmpeg (`brew install ffmpeg` or `apt install ffmpeg`), on macOS or Linux (Windows untested so far). Without Brave, run `npx playwright install chromium` once.
+Node 18+ and ffmpeg (`brew install ffmpeg`, `apt install ffmpeg`, or `winget install ffmpeg` on Windows). Without Brave, run `npx playwright install chromium` once.
 
 ```bash
 npm install -D voice-first-demo      # or use npx every time
 npx vfd init
 npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
+
+> **Windows:** supported but lightly tested; built and tested on macOS. It should work with Node and ffmpeg on
+> your `PATH` (finds Brave under Program Files or AppData, else uses Playwright's Chromium). If something fails,
+> likely spots are ffmpeg not on `PATH`, a browser that won't launch headless, or paths with unusual characters.
+> `npx vfd doctor` shows what's missing, and please [open an issue](https://github.com/Ajay702/voice-first-demo/issues)
+> with its output. Linux works the same way as macOS.
 
 Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
 

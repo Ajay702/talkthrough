@@ -16,7 +16,7 @@ export default (h) => ({
     // [The repo page]
     async (page) => {
       await h.moveTo(page, 420, 230, 40)
-      await h.at('voice'); await h.hoverText(page, 'voice-first-demo', false)
+      await h.at('voice'); await h.hoverText(page, 'talkthrough', false)
       await h.at('screen'); await h.moveTo(page, h.W * 0.45, 520, 40)
       await h.hold(2)
     },

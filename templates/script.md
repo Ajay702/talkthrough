@@ -1,4 +1,4 @@
-# voice-first-demo: example script (read aloud)
+# talkthrough: example script (read aloud)
 
 About 1½ minutes. Words in plain text are spoken; **[brackets]** are what's on screen.
 Replace this with your own script: keep the `## Part` headings and one **[cue]** per scene in record.mjs.
@@ -9,7 +9,7 @@ Replace this with your own script: keep the `## Part` headings and one **[cue]**
 
 **[The repo page]**
 
-Hi! This is voice-first-demo. It makes product demo videos the other way round: you record your voice first, and the screen recording follows you.
+Hi! This is talkthrough. It makes product demo videos the other way round: you record your voice first, and the screen recording follows you.
 
 **[How it works]**
 

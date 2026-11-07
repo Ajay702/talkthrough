@@ -31,18 +31,18 @@ export function render({ dir, config }) {
   const outs = []
   for (const part of parseScript(p.script)) {
     const video = join(p.out, `${part.id}.mp4`), out = join(p.final, `${part.id}.mp4`)
-    if (!existsSync(video)) throw new Error(`Missing ${video}: run "vfd record" first.`)
+    if (!existsSync(video)) throw new Error(`Missing ${video}: run "talkthrough record" first.`)
     if (own) {
       const voice = join(p.voice, `${part.id}.webm`)
-      if (!existsSync(voice)) throw new Error(`Missing ${voice}: record it in "vfd studio".`)
+      if (!existsSync(voice)) throw new Error(`Missing ${voice}: record it in "talkthrough studio".`)
       ff(['-i', video, '-i', voice, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5,apad',
         '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-shortest', out])
       console.log(`${part.id}: your voice over the screen → ${out}`)
     } else {
       const voice = join(p.tts, `${part.id}.wav`), anchorsFile = join(p.out, `${part.id}.anchors.json`)
-      if (!existsSync(voice)) throw new Error(`Missing ${voice}: run "vfd voice" first.`)
+      if (!existsSync(voice)) throw new Error(`Missing ${voice}: run "talkthrough voice" first.`)
       const anchors = existsSync(anchorsFile) ? JSON.parse(readFileSync(anchorsFile, 'utf8')) : []
-      if (!anchors.length) console.log(`${part.id}: no word anchors (record with "vfd record --synced" for word-exact timing)`)
+      if (!anchors.length) console.log(`${part.id}: no word anchors (record with "talkthrough record --synced" for word-exact timing)`)
       const { graph, aligned } = warpGraph(dur(video), dur(voice), anchors)
       ff(['-i', video, '-i', voice, '-filter_complex', graph, '-map', '[v]', '-map', '1:a', ...ENC, '-shortest', out])
       console.log(`${part.id}: ${aligned} actions lined up with their words → ${out}`)

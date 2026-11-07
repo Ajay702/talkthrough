@@ -1,4 +1,4 @@
-// "vfd draft": looks at your app and writes the first version of script.md, spoken-lines.json and scenes.mjs
+// "talkthrough draft": looks at your app and writes the first version of script.md, spoken-lines.json and scenes.mjs
 // with Claude (ANTHROPIC_API_KEY) or OpenAI (OPENAI_API_KEY). You review and edit; nothing is recorded yet.
 import Anthropic from '@anthropic-ai/sdk'
 import { chromium } from 'playwright'
@@ -96,7 +96,7 @@ export async function draft({ dir, config, about, pages = [], minutes = 3, sessi
   const pageFor = async (who) => {
     if (!ctxs[who ?? '']) {
       const state = who ? join(p.state, `${who}.json`) : undefined
-      if (state && !existsSync(state)) throw new Error(`No saved "${who}" session: run "vfd session ${who}"`)
+      if (state && !existsSync(state)) throw new Error(`No saved "${who}" session: run "talkthrough session ${who}"`)
       const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...(state ? { storageState: state } : {}) })
       ctxs[who ?? ''] = await ctx.newPage()
     }
@@ -117,7 +117,7 @@ export async function draft({ dir, config, about, pages = [], minutes = 3, sessi
   writeFileSync(p.script, out.script_md.trim() + '\n')
   const parts = parseScript(p.script)
   writeFileSync(p.spoken, JSON.stringify(Object.fromEntries(parts.map((x, i) => [x.id, out.spoken_lines[i] ?? x.sections.map((s) => s.text)])), null, 2))
-  writeFileSync(p.scenes, `// Drafted by "vfd draft"; edit freely. One scene per script section; see README "Scene helpers".\n${out.scenes_js.trim()}\n`)
+  writeFileSync(p.scenes, `// Drafted by "talkthrough draft"; edit freely. One scene per script section; see README "Scene helpers".\n${out.scenes_js.trim()}\n`)
   writeFileSync(join(dir, 'DRAFT-NOTES.md'), `# Things to check\n\n${out.notes}\n`)
 
   // Sanity check: the module loads and has one scene per section.
@@ -127,5 +127,5 @@ export async function draft({ dir, config, about, pages = [], minutes = 3, sessi
   const problems = parts.filter((x) => { const s = def[x.id]; return !s || (Array.isArray(s) ? s : s.scenes).length !== x.sections.length }).map((x) => x.id)
   console.log(`\nwrote script.md (${parts.length} parts, ${parts.reduce((a, x) => a + x.sections.length, 0)} sections), spoken-lines.json, scenes.mjs, DRAFT-NOTES.md`)
   if (problems.length) console.log(`⚠ scene count doesn't match the script in: ${problems.join(', ')}; fix scenes.mjs before recording`)
-  console.log('Next: read the script, then "vfd studio" to record your voice.')
+  console.log('Next: read the script, then "talkthrough studio" to record your voice.')
 }

@@ -34,7 +34,7 @@ export function findBrowser(config = {}) {
 }
 
 export function projectDir(flags = {}) {
-  return resolve(flags.dir ?? process.env.VFD_DIR ?? 'demo')
+  return resolve(flags.dir ?? process.env.TALKTHROUGH_DIR ?? 'demo')
 }
 
 // .env next to the demo folder and inside it; existing environment variables win.
@@ -64,7 +64,7 @@ export const ensure = (d) => (mkdirSync(d, { recursive: true }), d)
 
 // script.md: "## Part title" headings; each section starts with a **[on-screen cue]**, then the spoken text.
 export function parseScript(file) {
-  if (!existsSync(file)) throw new Error(`No script at ${file}. Run "vfd init" or "vfd draft" first.`)
+  if (!existsSync(file)) throw new Error(`No script at ${file}. Run "talkthrough init" or "talkthrough draft" first.`)
   const parts = readFileSync(file, 'utf8').split(/^## /m).slice(1)
   return parts.map((body, i) => {
     const title = body.split('\n')[0].trim()

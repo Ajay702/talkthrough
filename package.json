@@ -1,11 +1,10 @@
 {
-  "name": "voice-first-demo",
-  "version": "0.1.1",
+  "name": "talkthrough",
+  "version": "0.2.0",
   "description": "Narrated product demo videos for your app: record your voice first (or clone it), and the screen recording builds itself around your words.",
   "type": "module",
   "bin": {
-    "vfd": "bin/vfd.mjs",
-    "voice-first-demo": "bin/vfd.mjs"
+    "talkthrough": "bin/talkthrough.mjs"
   },
   "files": ["bin", "src", "templates", "README.md", "LICENSE"],
   "engines": { "node": ">=18" },
@@ -13,9 +12,9 @@
     "@anthropic-ai/sdk": "^1.6.0",
     "playwright": "^1.65.0"
   },
-  "keywords": ["demo-video", "screen-recording", "playwright", "voice-clone", "elevenlabs", "text-to-speech", "claude", "product-demo", "cli"],
-  "repository": { "type": "git", "url": "git+https://github.com/Ajay702/voice-first-demo.git" },
-  "homepage": "https://github.com/Ajay702/voice-first-demo#readme",
+  "keywords": ["walkthrough", "voiceover", "demo-video", "screen-recording", "playwright", "voice-clone", "elevenlabs", "text-to-speech", "claude", "product-demo", "cli"],
+  "repository": { "type": "git", "url": "git+https://github.com/Ajay702/talkthrough.git" },
+  "homepage": "https://github.com/Ajay702/talkthrough#readme",
   "author": "Ajay Raghav",
   "license": "MIT"
 }

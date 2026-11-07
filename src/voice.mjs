@@ -18,9 +18,9 @@ async function cloneVoice(p, key) {
   const idFile = join(p.tts, 'eleven_voice_id.txt')
   if (existsSync(idFile)) return readFileSync(idFile, 'utf8').trim()
   const takes = ['part1', 'part2', 'part3', 'part4'].map((x) => join(p.voice, `${x}.webm`)).filter(existsSync)
-  if (!takes.length) throw new Error('Cloning needs your voice: record at least one part in "vfd studio" first.')
+  if (!takes.length) throw new Error('Cloning needs your voice: record at least one part in "talkthrough studio" first.')
   const form = new FormData()
-  form.append('name', process.env.CLONE_NAME ?? 'My voice (voice-first-demo)')
+  form.append('name', process.env.CLONE_NAME ?? 'My voice (talkthrough)')
   form.append('remove_background_noise', 'true')
   for (const [i, f] of takes.entries()) {
     const mp3 = join(p.tts, `sample_${i}.mp3`)

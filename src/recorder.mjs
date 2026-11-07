@@ -73,7 +73,7 @@ async function hoverBadge(page, label) {
 }
 async function waitText(page, re, secs) { const end = Date.now() + secs * 1000; while (Date.now() < end) { if (re.test(await page.innerText('body'))) return true; await sleep(0.5) } return false }
 async function caption(page, text) {
-  await page.evaluate((t) => { let c = document.getElementById('__vfd_cap'); if (!c) { c = document.createElement('div'); c.id = '__vfd_cap'
+  await page.evaluate((t) => { let c = document.getElementById('__talkthrough_cap'); if (!c) { c = document.createElement('div'); c.id = '__talkthrough_cap'
     c.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:2147483646;background:#1f2937;color:#fff;font:600 22px system-ui;padding:12px 22px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2)'; document.body.appendChild(c) } c.textContent = t }, text)
 }
 
@@ -120,7 +120,7 @@ export async function record({ dir, config, only, synced = false }) {
     if (scenes.length !== part.sections.length) throw new Error(`${part.id}: ${scenes.length} scenes but ${part.sections.length} script sections`)
     const session = config.sessions[part.id]
     const storageState = session ? join(p.state, `${session}.json`) : undefined
-    if (storageState && !existsSync(storageState)) throw new Error(`${part.id} needs a saved "${session}" session: run "vfd session ${session}"`)
+    if (storageState && !existsSync(storageState)) throw new Error(`${part.id} needs a saved "${session}" session: run "talkthrough session ${session}"`)
 
     const browser = await chromium.launch({ executablePath: browserPath, headless: true })
     const ctx = await browser.newContext({ viewport: { width: W, height: H + HIDDEN_PX }, colorScheme: 'light', ...(storageState ? { storageState } : {}) })

@@ -12,7 +12,8 @@ const HELP = `voice-first-demo: narrated product demo videos, voice first.
   vfd draft --about "..."       let Claude/OpenAI look at your app and write script + scenes
             [--pages /a,/b] [--minutes 3] [--session admin] [--force]
   vfd studio                    teleprompter: record your voice, one part at a time (http://localhost:8766)
-  vfd session <name> [--url u]  log in once in a real browser; the recorder reuses that session
+  vfd session <name> [<name>…]  log in once per user in real browser windows; the recorder reuses them
+            [--url u] [--until file]  (--until: save when that file appears instead of on Enter)
   vfd voice                     generate the narration (voice.provider: eleven = your cloned voice, openai)
   vfd record [--synced] [--part part1]   record the screen, scene by scene
   vfd render                    put voice on video → demo/final/demo.mp4
@@ -54,8 +55,8 @@ async function main() {
     }
     case 'studio': { const { startStudio } = await import('../src/studio/server.mjs'); return startStudio(dir, Number(flags.port ?? 8766)) }
     case 'session': {
-      if (!pos[0]) throw new Error('Name the session: vfd session admin')
-      const { saveSession } = await import('../src/session.mjs'); return saveSession({ dir, config, name: pos[0], url: flags.url })
+      if (!pos.length) throw new Error('Name the session(s): vfd session admin  or  vfd session admin customer')
+      const { saveSession } = await import('../src/session.mjs'); return saveSession({ dir, config, names: pos, url: flags.url, until: flags.until })
     }
     case 'voice': { const { generateVoice } = await import('../src/voice.mjs'); return generateVoice({ dir, config }) }
     case 'record': {

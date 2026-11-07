@@ -1,26 +1,44 @@
-// "vfd session <name>": opens a browser window at your app, you log in, press Enter, and the session is
-// saved to demo/state/<name>.json so the headless recorder can show logged-in pages. Nothing leaves your machine.
+// "vfd session <name> [<name>…]": opens one browser window per name at your app (each with its own profile,
+// so being logged in as one user never logs out another), you log in, then press Enter (or create the
+// --until file), and each session is saved to demo/state/<name>.json for the headless recorder.
+// Nothing leaves your machine.
 import { chromium } from 'playwright'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { ensure, paths } from './project.mjs'
 
 const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 
-export async function saveSession({ dir, config, name, url }) {
+export async function saveSession({ dir, config, names, url, until }) {
   const p = paths(dir)
-  const ctx = await chromium.launchPersistentContext(join(ensure(p.state), `.browser-${name}`) /* one profile per session: logging in as someone else never logs this one out */, {
-    headless: false, viewport: null, executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined) })
-  const page = ctx.pages()[0] ?? (await ctx.newPage())
-  await page.goto(url ?? config.appUrl)
-  const rl = createInterface({ input: process.stdin, output: process.stdout })
-  await rl.question(`Log in as "${name}" in the browser window (stay logged in), then press Enter here… `)
-  rl.close()
-  const file = join(p.state, `${name}.json`)
-  // Cookies plus localStorage of the open tabs (some apps tie a session to an id kept there).
-  writeFileSync(file, JSON.stringify(await ctx.storageState()), { mode: 0o600 })
-  await ctx.close()
-  console.log(`saved ${file}. Use it with  sessions: { part1: '${name}' }  in demo.config.mjs`)
-  console.log('Logging out of the app later ends this session; just run "vfd session" again.')
+  const windows = []
+  for (const name of names) {
+    const ctx = await chromium.launchPersistentContext(join(ensure(p.state), `.browser-${name}`), {
+      headless: false, viewport: null, executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined) })
+    const page = ctx.pages()[0] ?? (await ctx.newPage())
+    await page.goto(url ?? config.appUrl)
+    await page.evaluate((n) => { document.title = `Log in as ${n}: ${document.title}` }, name).catch(() => {})
+    windows.push({ name, ctx })
+  }
+  const who = names.map((n) => `"${n}"`).join(' and ')
+  if (until) {
+    if (existsSync(until)) unlinkSync(until)
+    console.log(`Log in as ${who} (one window each, stay logged in). Waiting for ${until} …`)
+    while (!existsSync(until)) await new Promise((r) => setTimeout(r, 1000))
+    unlinkSync(until)
+  } else {
+    const rl = createInterface({ input: process.stdin, output: process.stdout })
+    await rl.question(`Log in as ${who} (one window each, stay logged in), then press Enter here… `)
+    rl.close()
+  }
+  for (const { name, ctx } of windows) {
+    const file = join(p.state, `${name}.json`)
+    // Cookies plus localStorage of the open tabs (some apps tie a session to an id kept there).
+    writeFileSync(file, JSON.stringify(await ctx.storageState()), { mode: 0o600 })
+    await ctx.close()
+    console.log(`saved ${file}`)
+  }
+  console.log(`Map parts to sessions in demo.config.mjs, e.g. sessions: { part1: '${names[0]}' }.`)
+  console.log('Logging out of the app later ends a session; just run "vfd session" again.')
 }

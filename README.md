@@ -1,5 +1,7 @@
 # voice-first-demo
 
+[![ci](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+
 <p align="center">
   <a href="docs/demo.mp4"><img src="docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
   <sub>▶ <a href="docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
@@ -73,11 +75,10 @@ npx vfd init
 npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
 
-> **Windows:** supported but lightly tested; built and tested on macOS. It should work with Node and ffmpeg on
-> your `PATH` (finds Brave under Program Files or AppData, else uses Playwright's Chromium). If something fails,
-> likely spots are ffmpeg not on `PATH`, a browser that won't launch headless, or paths with unusual characters.
-> `npx vfd doctor` shows what's missing, and please [open an issue](https://github.com/Ajay702/voice-first-demo/issues)
-> with its output. Linux works the same way as macOS.
+> **Windows:** supported. Every push runs install, `init`, `doctor` and a real screen recording on Windows,
+> macOS and Linux in CI. Voice cloning, `draft` and `render` share the same code but have mainly been used on
+> macOS, so if anything fails on Windows (most likely ffmpeg not on `PATH`, or a browser that won't launch headless),
+> run `npx vfd doctor` and [open an issue](https://github.com/Ajay702/voice-first-demo/issues) with its output.
 
 Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
 

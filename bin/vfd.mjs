@@ -106,7 +106,7 @@ async function doctor(config) {
   ok(has('ffmpeg') && has('ffprobe'), 'ffmpeg + ffprobe', 'brew install ffmpeg  /  apt install ffmpeg')
   const b = findBrowser(config)
   ok(true, `browser: ${b ?? "Playwright's Chromium (if missing: npx playwright install chromium)"}`)
-  ok(['darwin', 'linux'].includes(process.platform), `platform: ${process.platform}`, 'Windows support is new and lightly tested; please report issues')
+  ok(true, `platform: ${process.platform}${process.platform === 'win32' ? ' (recording is tested on Windows in CI; report anything odd)' : ''}`)
   const p = paths(dir)
   ok(existsSync(p.script), `script ${p.script}`, 'vfd init  or  vfd draft')
   if (existsSync(p.script)) {

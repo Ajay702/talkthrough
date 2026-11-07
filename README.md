@@ -1,10 +1,12 @@
-# voice-first-demo
+# talkthrough
 
-[![ci](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+*npm package: [`voice-first-demo`](https://www.npmjs.com/package/voice-first-demo) · command: `vfd`*
+
+[![ci](https://github.com/Ajay702/talkthrough/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/talkthrough/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 <p align="center">
-  <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><img src="https://raw.githubusercontent.com/Ajay702/voice-first-demo/main/docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
-  <sub>▶ <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
+  <a href="https://github.com/Ajay702/talkthrough/blob/main/docs/demo.mp4"><img src="https://raw.githubusercontent.com/Ajay702/talkthrough/main/docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
+  <sub>▶ <a href="https://github.com/Ajay702/talkthrough/blob/main/docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
 </p>
 
 **Narrated product demo videos for your app, without the editing.** Hiring assignments, launches,
@@ -82,7 +84,7 @@ Not installing it? Use the full name every time: `npx voice-first-demo init`, `n
 > **Windows:** supported. Every push runs install, `init`, `doctor` and a real screen recording on Windows,
 > macOS and Linux in CI. Voice cloning, `draft` and `render` share the same code but have mainly been used on
 > macOS, so if anything fails on Windows (most likely ffmpeg not on `PATH`, or a browser that won't launch headless),
-> run `npx vfd doctor` and [open an issue](https://github.com/Ajay702/voice-first-demo/issues) with its output.
+> run `npx vfd doctor` and [open an issue](https://github.com/Ajay702/talkthrough/issues) with its output.
 
 Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
 

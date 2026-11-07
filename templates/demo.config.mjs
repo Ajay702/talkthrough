@@ -1,7 +1,7 @@
 // voice-first-demo settings for this project. Keys go in demo/.env (git-ignored), never here.
 export default {
   // Where the recorder starts. Scenes can navigate anywhere from here.
-  appUrl: 'https://github.com/Ajay702/voice-first-demo',
+  appUrl: 'https://github.com/Ajay702/talkthrough',
 
   // Logged-in pages: run `vfd session admin` once, then map parts to sessions.
   sessions: {

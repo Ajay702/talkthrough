@@ -14,8 +14,8 @@
     "playwright": "^1.65.0"
   },
   "keywords": ["demo-video", "screen-recording", "playwright", "voice-clone", "elevenlabs", "text-to-speech", "claude", "product-demo", "cli"],
-  "repository": { "type": "git", "url": "git+https://github.com/Ajay702/voice-first-demo.git" },
-  "homepage": "https://github.com/Ajay702/voice-first-demo#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/Ajay702/talkthrough.git" },
+  "homepage": "https://github.com/Ajay702/talkthrough#readme",
   "author": "Ajay Raghav",
   "license": "MIT"
 }

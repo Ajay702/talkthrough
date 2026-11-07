@@ -49,6 +49,10 @@ your app ──► vfd draft (Claude/OpenAI) ──► script.md + scenes.mjs + 
 | Sync | scene-level, within a second or two | word-exact: `h.at('Send')` clicks on "Send" |
 | Retakes | re-read the part | edit `spoken-lines.json`, run `vfd make` again |
 
+**Whose voice?** Always yours: the clone is made from what *you* record in `vfd studio`, in *your* ElevenLabs
+account, with *your* key. Only clone your own voice, or one you have explicit permission to use (ElevenLabs' terms
+require this). Delete the clone from your ElevenLabs Voices page whenever you like.
+
 The **cloned voice** reads `spoken-lines.json`: same meaning as the script, but written the way people talk.
 That means a light "um", `[pause]` tags (ElevenLabs v3), and names spelled as pronounced ("N-eight-N"). Word
 timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock voice instead, styled by
@@ -56,7 +60,7 @@ timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock
 
 ## Install
 
-Node 18+ and ffmpeg (`brew install ffmpeg` or `apt install ffmpeg`). Without Brave, run `npx playwright install chromium` once.
+Node 18+ and ffmpeg (`brew install ffmpeg` or `apt install ffmpeg`), on macOS or Linux (Windows untested so far). Without Brave, run `npx playwright install chromium` once.
 
 ```bash
 npm install -D voice-first-demo      # or use npx every time

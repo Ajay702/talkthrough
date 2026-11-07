@@ -3,8 +3,8 @@
 [![ci](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 <p align="center">
-  <a href="docs/demo.mp4"><img src="docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
-  <sub>▶ <a href="docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
+  <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><img src="https://raw.githubusercontent.com/Ajay702/voice-first-demo/main/docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
+  <sub>▶ <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
 </p>
 
 **Narrated product demo videos for your app, without the editing.** Hiring assignments, launches,

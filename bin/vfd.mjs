@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // voice-first-demo CLI. Run from your project root; everything lives in ./demo (or --dir).
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, readFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ensure, loadConfig, loadEnv, parseScript, paths, projectDir } from '../src/project.mjs'
@@ -17,6 +17,7 @@ const HELP = `voice-first-demo: narrated product demo videos, voice first.
   vfd record [--synced] [--part part1]   record the screen, scene by scene
   vfd render                    put voice on video → demo/final/demo.mp4
   vfd make                      voice (if AI) + record + render in one go
+  vfd key <NAME>                paste an API key (hidden) into demo/.env, e.g. vfd key ELEVENLABS_API_KEY
   vfd doctor                    check ffmpeg, browser, keys, script and scenes
 
 Options: --dir <folder> (default ./demo)`
@@ -42,6 +43,7 @@ async function main() {
     }
     return console.log(`\nNext: set appUrl in ${join(dir, 'demo.config.mjs')}, copy .env.example to .env if you use AI features,\nthen "vfd draft --about 'what your app does'" or edit script.md + scenes.mjs yourself.`)
   }
+  if (cmd === 'key') return saveKey(pos[0])
   const config = await loadConfig(dir)
   const only = flags.part ? String(flags.part).split(',') : undefined
   switch (cmd) {
@@ -70,6 +72,30 @@ async function main() {
     case 'doctor': return doctor(config)
     default: console.log(`Unknown command "${cmd}".\n\n${HELP}`); process.exitCode = 1
   }
+}
+
+// Hidden prompt → demo/.env (mode 600). The key is never echoed or written anywhere else.
+async function saveKey(name) {
+  const KNOWN = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'ELEVENLABS_API_KEY']
+  if (!name || !/^[A-Z0-9_]+$/.test(name)) throw new Error(`Usage: vfd key ${KNOWN.join(' | ')}`)
+  process.stdout.write(`Paste ${name} (hidden), then Enter: `)
+  const key = await new Promise((resolve) => {
+    let buf = ''
+    process.stdin.setRawMode?.(true); process.stdin.resume(); process.stdin.setEncoding('utf8')
+    process.stdin.on('data', function on(ch) {
+      for (const c of ch) {
+        if (c === '\r' || c === '\n') { process.stdin.setRawMode?.(false); process.stdin.pause(); process.stdin.off('data', on); process.stdout.write('\n'); return resolve(buf.trim()) }
+        if (c === '\u0003') process.exit(130)
+        if (c === '\u007f') buf = buf.slice(0, -1); else buf += c
+      }
+    })
+  })
+  if (!key) throw new Error('Nothing entered.')
+  ensure(dir)
+  const f = join(dir, '.env')
+  const lines = existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter((l) => l && !l.startsWith(`${name}=`)) : []
+  writeFileSync(f, [...lines, `${name}=${key}`].join('\n') + '\n', { mode: 0o600 })
+  console.log(`saved ${name} to ${f}`)
 }
 
 async function doctor(config) {

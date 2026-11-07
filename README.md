@@ -64,7 +64,7 @@ npx vfd init
 npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
 
-Keys go in `demo/.env` (git-ignored). You only need the ones for features you use:
+Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
 
 | Key | Used for |
 |---|---|

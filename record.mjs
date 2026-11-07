@@ -1,4 +1,4 @@
-// Records the silent screen videos for the Windcast demo.
+// Records the silent screen videos for a voice-first demo.
 //   node record.mjs part1|part2|all
 // If voice/<part>.marks.json exists (from the voice studio), each scene is fitted to how
 // long you actually spoke that section; otherwise scenes are paced to script.md's
@@ -9,13 +9,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const APP = process.env.APP_URL ?? 'https://vqmzk.vercel.app'
-const REPO = process.env.REPO_URL ?? 'https://github.com/Ajay702/rqx4tn'
+const APP = process.env.APP_URL ?? 'https://github.com/Ajay702/voice-first-demo'
 // Brave if installed (or BROWSER_PATH), otherwise Playwright's own Chromium.
 const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 const BROWSER = process.env.BROWSER_PATH ?? (existsSync(BRAVE) ? BRAVE : undefined)
 const OUT = fileURLToPath(new URL('./out/', import.meta.url))
-const VOICE = fileURLToPath(new URL('./voice/', import.meta.url))
+const VOICE = fileURLToPath(new URL(`./${process.env.VOICE_DIR ?? 'voice'}/`, import.meta.url))
 const W = 1920
 const H = 1080
 // Spoken pace used to size each section; slow enough to read without rushing.
@@ -26,6 +25,20 @@ const forWords = (n) => (n / WPM) * 60 + 3
 // A pause that would run past the scene's slot is cut short, so a slow page load eats
 // into idle time rather than pushing the next scene late.
 let pace = 1
+// Word-synced actions: voice-el/<part>.words.json gives each spoken word's time; at('Red') waits for it.
+let WORDS = [], T0 = 0, SEC = 0, CUR = 0, ANCHORS = []
+const norm = (x) => x.toLowerCase().replace(/[^a-z0-9]/g, '')
+async function at(token, lead = 0.3) {
+  if (!WORDS.length) return // way 1 (your own recording): no word timings, actions just run in order
+  const tk = norm(token)
+  const i = WORDS.findIndex((x, k) => k >= CUR && x.s === SEC && norm(x.w).startsWith(tk))
+  if (i < 0) { console.log(`    (word "${token}" not found in section ${SEC + 1})`); return }
+  CUR = i + 1
+  const wait = (T0 + (WORDS[i].t - lead) * 1000 - Date.now()) / 1000
+  if (wait > 0) await sleep(wait); else if (wait < -0.8) console.log(`    late by ${(-wait).toFixed(1)}s for "${token}"`)
+  // video time this action really starts → the voice time it should start (warp.mjs lines them up)
+  ANCHORS.push({ v: (Date.now() - T0) / 1000, a: WORDS[i].t - lead, word: token })
+}
 let slotEnd = Infinity
 const hold = (s) => sleep(Math.max(0, Math.min(s * pace, (slotEnd - Date.now()) / 1000 - 1)))
 
@@ -47,13 +60,14 @@ addEventListener('DOMContentLoaded', () => {
 const HIDDEN_PX = 81
 const FPS = 25
 
-async function record(name, prepare, scenes) {
+async function record(name, prepare, scenes, storageState) {
   mkdirSync(OUT, { recursive: true })
   const browser = await chromium.launch({ executablePath: BROWSER, headless: true })
   const ctx = await browser.newContext({
     viewport: { width: W, height: H + HIDDEN_PX },
     colorScheme: 'light',
     locale: 'en-GB',
+    ...(storageState ? { storageState } : {}),
   })
   await ctx.addInitScript(CURSOR)
   const page = await ctx.newPage()
@@ -74,6 +88,10 @@ async function record(name, prepare, scenes) {
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92 })
   while (!last) await sleep(0.05)
   const t0 = Date.now()
+  T0 = t0
+  const wf = join(VOICE, `${name}.words.json`)
+  WORDS = existsSync(wf) ? JSON.parse(readFileSync(wf, 'utf8')) : []
+  ANCHORS = []
   let written = 0
   const pump = setInterval(() => {
     const due = Math.floor(((Date.now() - t0) / 1000) * FPS)
@@ -90,6 +108,7 @@ async function record(name, prepare, scenes) {
     // Loose fit: stretch or squeeze the scene's pauses towards its slot, within limits.
     pace = Math.min(2.5, Math.max(0.4, (ends[i] - at) / forWords(words)))
     slotEnd = t0 + ends[i] * 1000
+    SEC = i; CUR = Math.max(0, WORDS.findIndex((x) => x.s === i))
     await run(page)
     // Hold to the scene's end on the overall timeline, so an overrun is caught up later.
     const left = ends[i] - (Date.now() - t0) / 1000
@@ -103,6 +122,7 @@ async function record(name, prepare, scenes) {
   await done
   await browser.close()
   writeFileSync(join(OUT, `${name}.cues.json`), JSON.stringify(cues, null, 2))
+  writeFileSync(join(OUT, `${name}.anchors.json`), JSON.stringify(ANCHORS, null, 2))
   console.log(`→ ${mp4}`)
 }
 
@@ -134,17 +154,33 @@ function sceneEnds(name, scenes) {
 // --- helpers --------------------------------------------------------------
 
 let mouse = { x: W / 2, y: H / 2 }
-async function moveTo(page, x, y, steps = 30) {
-  await page.mouse.move(x, y, { steps })
+// Human-like cursor: eased (slow-fast-slow) along a slight curve, ~16 ms per step.
+async function moveTo(page, x, y, steps = 34) {
+  const from = { ...mouse }
+  const bend = (Math.random() - 0.5) * 0.18
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    const nx = -(y - from.y) * bend, ny = (x - from.x) * bend
+    const arc = Math.sin(Math.PI * e)
+    await page.mouse.move(from.x + (x - from.x) * e + nx * arc, from.y + (y - from.y) * e + ny * arc)
+    await sleep(0.016)
+  }
   mouse = { x, y }
 }
 async function moveToEl(page, locator, dx = 0.5, dy = 0.5) {
   const b = await locator.boundingBox()
   await moveTo(page, b.x + b.width * dx, b.y + b.height * dy)
 }
-async function scrollSmooth(page, y) {
-  await page.evaluate((top) => window.scrollTo({ top, behavior: 'smooth' }), y)
-  await sleep(1.2)
+// Eased scroll over ~1 s, like a trackpad flick, instead of an instant jump.
+async function scrollSmooth(page, y, secs = 1.1) {
+  await page.evaluate(async ([top, ms]) => {
+    const s = window.scrollY, d = top - s, t0 = performance.now()
+    await new Promise((res) => { const f = (now) => { const t = Math.min(1, (now - t0) / ms)
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+      window.scrollTo(0, s + d * e); t < 1 ? requestAnimationFrame(f) : res() }; requestAnimationFrame(f) })
+  }, [y, secs * 1000])
+  await sleep(0.2)
 }
 async function scrollToEl(page, locator, offset = 90) {
   const y = await locator.evaluate((el, o) => el.getBoundingClientRect().top + window.scrollY - o, offset)
@@ -152,158 +188,79 @@ async function scrollToEl(page, locator, offset = 90) {
 }
 const card = (page, title) => page.locator('.card, section').filter({ has: page.getByRole('heading', { name: title }) }).first()
 
-// --- Part 1: client pitch on the live dashboard ----------------------------
+// --- scene helpers --------------------------------------------------------
+
+const visible = (p, sel, text) => p.locator(sel).filter({ hasText: text }).filter({ visible: true })
+async function clickEl(p, loc) { await loc.scrollIntoViewIfNeeded(); await moveToEl(p, loc); await sleep(0.25); await loc.click() }
+async function typeHuman(p, loc, text, gap = 0.09) { await clickEl(p, loc); for (const ch of text) { await p.keyboard.type(ch); await sleep(gap + Math.random() * gap * 0.8) } }
+// The button with `label` on the same row as some text (e.g. a table row's name).
+async function rowButton(p, name, label) {
+  const nb = await p.getByText(name, { exact: true }).filter({ visible: true }).first().boundingBox()
+  const btns = p.locator('button').filter({ hasText: new RegExp(`^\\s*${label}\\s*$`) }).filter({ visible: true })
+  let best = null, bd = 1e9
+  for (const b of await btns.all()) { const bb = await b.boundingBox(); if (!bb) continue; const d = Math.abs(bb.y + bb.height / 2 - (nb.y + nb.height / 2)); if (d < bd) { bd = d; best = b } }
+  return best
+}
+async function textY(p, text) { const b = await p.getByText(text).filter({ visible: true }).first().boundingBox(); return b ? b.y + b.height / 2 : H / 2 }
+async function scrollToText(p, text, offset = 140) {
+  const loc = p.getByText(text).filter({ visible: true }).first()
+  const y = await loc.evaluate((el, o) => el.getBoundingClientRect().top + window.scrollY - o, offset)
+  await scrollSmooth(p, y)
+}
+async function waitText(p, re, secs) { const end = Date.now() + secs * 1000; while (Date.now() < end) { if (re.test(await p.innerText('body'))) return true; await sleep(0.5) } return false }
+async function caption(p, text) {
+  await p.evaluate((t) => { let c = document.getElementById('__cap'); if (!c) { c = document.createElement('div'); c.id = '__cap'
+    c.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:2147483646;background:#1f3b57;color:#fff;font:600 22px system-ui;padding:12px 22px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2)'; document.body.appendChild(c) } c.textContent = t }, text)
+}
+// --- generic helpers used by the example ---------------------------------------
+const hoverText = async (p, text, exact = true) => {
+  const loc = p.getByText(text, { exact }).filter({ visible: true }).first()
+  if (await loc.count()) { await loc.scrollIntoViewIfNeeded(); await moveToEl(p, loc) }
+}
+// When the same word appears as a label and as a badge, the badge is usually the right-most one.
+async function hoverBadge(p, label) {
+  let best = null, bx = -1
+  for (const l of await p.getByText(label, { exact: true }).filter({ visible: true }).all()) { const b = await l.boundingBox(); if (b && b.x > bx && b.y > 0 && b.y < H) { bx = b.x; best = l } }
+  if (best) await moveToEl(p, best)
+}
+const heading = (p, text) => scrollToText(p, text, 110)
+
+// --- Example: the tool demos its own GitHub page ---------------------------------
+// Each scene matches one **[cue]** section of script.md. `await at('word')` waits until that word is
+// spoken (needs voice-el/<part>.words.json from build-voice.mjs; without it, actions just run in order).
+// Replace these with your own product: ordinary Playwright calls plus hold(), at() and the helpers above.
 
 const part1 = [
-  ['Dashboard, top of page', 77, async (p) => {
+  ['The repo page', 40, async (p) => {
+    await moveTo(p, 420, 230, 40)
+    await at('voice'); await hoverText(p, 'voice-first-demo', false)
+    await at('screen'); await moveTo(p, W * 0.45, 520, 40)
     await hold(2)
-    await moveTo(p, W * 0.3, 160, 40)
   }],
-  ['Main chart: hover over a point', 78, async (p) => {
-    const chart = p.locator('.recharts-wrapper').first()
-    await scrollToEl(p, chart, 160)
-    // Glide across the chart so the tooltip shows run time and lead time.
-    for (const dx of [0.2, 0.35, 0.5, 0.62, 0.75]) {
-      await moveToEl(p, chart, dx, 0.4)
-      await hold(4)
-    }
-  }],
-  ['KPI cards', 78, async (p) => {
-    const kpis = p.locator('.kpis')
-    await scrollToEl(p, kpis, 200)
-    for (const i of [0, 2, 4]) {
-      await moveToEl(p, kpis.locator('.kpi').nth(i), 0.5, 0.5)
-      await hold(6)
-    }
-  }],
-  ['Change cutoff, then fixed lead time', 31, async (p) => {
-    await scrollSmooth(p, 0)
-    const time = p.locator('input[type=time]')
-    await moveToEl(p, time)
-    await p.mouse.down(); await p.mouse.up()
-    await time.fill('08:00')
-    await hold(3)
-    const radio = p.getByRole('radio', { name: 'Fixed lead time' })
-    await moveToEl(p, radio)
-    await radio.click()
-    await hold(1.5)
-    const slider = p.getByLabel('Lead time in hours')
-    for (const h of [1, 6, 12, 24, 36, 48]) {
-      const b = await slider.boundingBox()
-      await moveTo(p, b.x + (b.width * h) / 48, b.y + b.height / 2, 12)
-      await slider.fill(String(h))
-      await hold(1.6)
-    }
-    const dayAhead = p.getByRole('radio', { name: 'Day-ahead decision' })
-    await moveToEl(p, dayAhead)
-    await dayAhead.click()
-    await time.fill('10:00')
-  }],
-  ['Lead-time, by-hour and daily charts', 73, async (p) => {
-    for (const title of ['Accuracy vs lead time', 'Error by time of day', 'Daily error']) {
-      const c = card(p, title)
-      await scrollToEl(p, c, 120)
-      await moveToEl(p, c.locator('.recharts-wrapper'), 0.55, 0.5)
-      await hold(title === 'Daily error' ? 8 : 11)
-    }
-  }],
-  ['28 January: forecast evolution', 34, async (p) => {
-    const day = p.getByLabel('Delivery day')
-    await day.fill('2026-01-28')
-    const c = p.locator('.recharts-wrapper').last()
-    await scrollToEl(p, day, 140)
-    await moveToEl(p, c, 0.3, 0.35)
-    await hold(5)
-    // The run-by-run tooltip is tall; move off the chart so the lines stay visible.
-    await moveTo(p, W * 0.08, mouse.y, 25)
-  }],
-  ['Back to top', 30, async (p) => {
-    await scrollSmooth(p, 0)
-    await moveTo(p, W * 0.5, 300)
+  ['How it works', 45, async (p) => {
+    await at('flips', 0.8); await heading(p, 'How it works')
+    await at('teleprompter'); await hoverText(p, 'Voice studio', false)
+    await at('recorder'); await hoverText(p, 'Recorder', false)
+    await hold(2)
   }],
 ]
 
-// --- Part 2: tech-lead walkthrough on GitHub -------------------------------
-
-const blob = (path, lines = '') => `${REPO}/blob/main/${path}${lines}`
-
-async function github(p, url) {
-  await p.goto(url, { waitUntil: 'domcontentloaded' })
-  // GitHub keeps background requests going, so never wait long for the network to go quiet.
-  await p.waitForLoadState('networkidle', { timeout: 1500 }).catch(() => {})
-  await sleep(0.5)
-}
-// Bring a line of a GitHub file view into view, and point at it.
-async function showLine(p, n, secs) {
-  const line = p.locator(`[data-line-number="${n}"], #L${n}`).first()
-  await line.scrollIntoViewIfNeeded().catch(() => {})
-  const y = await line.evaluate((el) => el.getBoundingClientRect().top + window.scrollY - 220).catch(() => null)
-  if (y !== null) await scrollSmooth(p, y)
-  const b = await line.boundingBox().catch(() => null)
-  if (b) await moveTo(p, b.x + 420, b.y + b.height / 2, 25)
-  await hold(secs)
-}
-async function readmeHeading(p, text, secs) {
-  const h = p.locator('article').getByRole('heading', { name: text }).first()
-  await scrollToEl(p, h, 80)
-  await moveToEl(p, h, 0.1, 0.5)
-  await hold(secs)
-}
-
 const part2 = [
-  ['GitHub repo, README architecture', 91, async (p) => {
-    await moveTo(p, 600, 400, 30)
-    await hold(8)
-    await readmeHeading(p, 'Architecture', 14)
-    await readmeHeading(p, 'Repository layout', 10)
+  ['Two ways to voice it', 45, async (p) => {
+    await at('two', 0.8); await heading(p, 'Two ways to voice it')
+    await at('clone'); await hoverText(p, 'cloned voice', false)
+    await hold(2)
   }],
-  ['backend/app/analysis.py', 150, async (p) => {
-    await github(p, blob('backend/app/analysis.py', '#L40-L61'))
-    await showLine(p, 40, 8)
-    await showLine(p, 53, 14)        // hindcast rows dropped
-    await showLine(p, 70, 18)        // latest_before: bisect
-    await showLine(p, 82, 20)        // decision_cutoff: day-ahead vs fixed lead time
-    await showLine(p, 104, 14)       // select_forecasts
-  }],
-  ['backend/app/main.py', 38, async (p) => {
-    await github(p, blob('backend/app/main.py', '#L74-L90'))
-    await showLine(p, 74, 10)
-    await showLine(p, 117, 6)
-  }],
-  ['frontend/src', 32, async (p) => {
-    await github(p, `${REPO}/tree/main/frontend/src`)
-    await moveTo(p, 500, 380, 25)
-    await hold(5)
-    await github(p, blob('frontend/src/charts.tsx', '#L33'))
-    await showLine(p, 33, 5)
-  }],
-  ['Tests and delivery', 57, async (p) => {
-    await github(p, blob('backend/tests/test_analysis.py', '#L57-L61'))
-    await showLine(p, 34, 5)
-    await showLine(p, 57, 6)
-    await github(p, blob('e2e/app.spec.ts'))
-    await moveTo(p, 700, 450, 25)
-    await hold(6)
-    await github(p, blob('Dockerfile'))
-    await moveTo(p, 700, 420, 25)
-    await hold(6)
-    await github(p, blob('vercel.json'))
-    await moveTo(p, 700, 420, 25)
-  }],
-  ['README: AI note and next steps', 74, async (p) => {
-    await github(p, REPO)
-    await readmeHeading(p, 'AI tools', 12)
-    await readmeHeading(p, 'Running it', 12)
-    await p.goto(APP, { waitUntil: 'networkidle' })
-    await moveTo(p, W * 0.5, 300, 30)
+  ['Making it yours', 40, async (p) => {
+    await at('scenes', 0.8); await heading(p, 'Making it yours')
+    await at('word'); await hoverText(p, "at('word')", false)
+    await hold(2)
   }],
 ]
 
 const which = process.argv[2] ?? 'all'
-const loadApp = async (p) => {
-  await p.goto(APP, { waitUntil: 'networkidle' })
-  await p.locator('.recharts-wrapper').first().waitFor()
-  await sleep(1)
-}
-if (which === 'part1' || which === 'all') await record('part1', loadApp, part1)
-if (which === 'part2' || which === 'all') await record('part2', (p) => github(p, REPO), part2)
+// Logged-in apps: save a session from your own browser with save-session.mjs, then pass it here.
+const STATE = (n) => { const f = fileURLToPath(new URL(`./state/${n}.json`, import.meta.url)); return existsSync(f) ? f : undefined }
+const open = async (p) => { await p.goto(APP, { waitUntil: 'domcontentloaded' }); await sleep(2) }
+if (which === 'part1' || which === 'all') await record('part1', open, part1, STATE('part1'))
+if (which === 'part2' || which === 'all') await record('part2', async (p) => { await open(p); await heading(p, 'Two ways to voice it') }, part2, STATE('part2'))

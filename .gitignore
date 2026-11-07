@@ -1,6 +1,11 @@
 node_modules
 __pycache__/
-# Your recordings and rendered videos stay on your machine
+# Your recordings, voices, sessions and rendered videos stay on your machine
 voice/
+voice-el/
+tts/
+seg/
 out/
 final/
+state/
+.env

@@ -1,0 +1,26 @@
+# Smoke test on Windows, macOS and Linux: install, init a project, doctor, and record a real scene.
+name: ci
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: init + doctor + record part 1 of the starter demo
+        shell: bash
+        run: |
+          mkdir smoke && cd smoke
+          node ../bin/vfd.mjs init
+          node ../bin/vfd.mjs doctor || true
+          node ../bin/vfd.mjs record --part part1
+          ls -la demo/out
+          test -s demo/out/part1.mp4

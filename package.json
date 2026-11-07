@@ -1,6 +1,6 @@
 {
   "name": "voice-first-demo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Narrated product demo videos for your app: record your voice first (or clone it), and the screen recording builds itself around your words.",
   "type": "module",
   "bin": {

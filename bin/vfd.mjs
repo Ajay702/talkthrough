@@ -7,6 +7,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { ensure, findBrowser, loadConfig, loadEnv, parseScript, paths, projectDir } from '../src/project.mjs'
 
 const HELP = `voice-first-demo: narrated product demo videos, voice first.
+(Install it in your project with  npm install -D voice-first-demo  so "npx vfd" runs this tool;
+ otherwise type  npx voice-first-demo <command>.)
 
   vfd init                      add a demo/ folder (config, script, scenes, .env.example) to this project
   vfd draft --about "..."       let Claude/OpenAI look at your app and write script + scenes

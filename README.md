@@ -12,7 +12,8 @@ client handoffs and PR reviews all ask for "a short video walking through it". T
 running app: you talk (or your cloned voice does), and the screen recording builds itself around your words.
 
 ```bash
-npx voice-first-demo init          # adds a demo/ folder to your project
+npm install -D voice-first-demo     # adds the `vfd` command to your project
+npx vfd init                        # adds a demo/ folder
 npx vfd draft --about "invoicing app for freelancers: create and send an invoice"
 npx vfd studio                      # read the script aloud once
 npx vfd make                        # → demo/final/demo.mp4
@@ -70,10 +71,13 @@ timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock
 Node 18+ and ffmpeg (`brew install ffmpeg`, `apt install ffmpeg`, or `winget install ffmpeg` on Windows). Without Brave, run `npx playwright install chromium` once.
 
 ```bash
-npm install -D voice-first-demo      # or use npx every time
+npm install -D voice-first-demo      # then `npx vfd …` runs this project's copy
 npx vfd init
 npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
+
+Not installing it? Use the full name every time: `npx voice-first-demo init`, `npx voice-first-demo make`, and so on.
+(A bare `npx vfd` without the install would fetch an unrelated npm package that happens to be called `vfd`.)
 
 > **Windows:** supported. Every push runs install, `init`, `doctor` and a real screen recording on Windows,
 > macOS and Linux in CI. Voice cloning, `draft` and `render` share the same code but have mainly been used on

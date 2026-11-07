@@ -1,0 +1,7 @@
+# Recordings, voices, logins and videos stay on your machine
+.env
+voice/
+tts/
+out/
+final/
+state/

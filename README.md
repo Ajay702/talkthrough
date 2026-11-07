@@ -1,102 +1,141 @@
 # voice-first-demo
 
-Make a narrated product demo video by recording your **voice first** and letting the
-**screen recording build itself around your timing**.
+**Narrated product demo videos for your app, without the editing.** Hiring assignments, launches,
+client handoffs and PR reviews all ask for "a short video walking through it". This makes one from your
+running app: you talk (or your cloned voice does), and the screen recording builds itself around your words.
 
-Usually you record the screen, then struggle to talk over it at the right moments. This
-flips it. You read a script at your own pace, the tool notes when you move to each
-section, and a headless browser then performs each scene to fit what you said.
-Optionally, your voice is cloned so every on-screen action lands **exactly on the word** that mentions it.
+```bash
+npx voice-first-demo init          # adds a demo/ folder to your project
+npx vfd draft --about "invoicing app for freelancers: create and send an invoice"
+npx vfd studio                      # read the script aloud once
+npx vfd make                        # → demo/final/demo.mp4
+```
+
+- **Voice first.** Record narration at your own pace in a little teleprompter. No more re-recording the screen because you stumbled.
+- **Your own voice, cloned (optional).** ElevenLabs clones your voice from that one take, then reads every line, with each click landing on the exact word that mentions it.
+- **Looks like a person did it.** The cursor glides on a curve, scrolls ease in and out, and typing has human gaps. Real 1080p at 25 fps.
+- **AI writes the first draft.** Claude (or OpenAI) looks at your app's pages and writes the script plus the Playwright scenes. You edit, not author.
+- **Local first.** Recordings, logins and videos stay in `demo/` (git-ignored). Only the AI calls you turn on leave your machine.
 
 ## How it works
 
 ```
-script.md ──► Voice studio (teleprompter) ──► voice/<part>.webm + marks.json
-                                                     │
-              ┌──────────────────────────────────────┴───────────────────────────┐
-              ▼  your own recording                                               ▼  cloned / AI voice
-   record.mjs: one scene per section,                  tts-remap.mjs: speak each line (ElevenLabs clone
-   paced to your timing                                of your takes, or an OpenAI voice)
-              │                                        build-voice.mjs: voice track + time of every word
-              ▼                                        record.mjs: actions wait for their words (at('word'))
-   merge.sh ──► final/demo.mp4                         warp.mjs: re-time the video piece by piece so each
-                                                       action starts on its word ──► final/part*-synced.mp4
+your app ──► vfd draft (Claude/OpenAI) ──► script.md + scenes.mjs + spoken-lines.json
+                                                   │
+                vfd studio (Voice studio: teleprompter) ──► your voice, section by section
+                                                   │
+            ┌──────────────────────────────────────┴───────────────────────────┐
+            ▼ voice.provider: 'own'                                             ▼ 'eleven' (your cloned voice) / 'openai'
+   vfd record: scenes paced to your recording              vfd voice: speaks each line + time of every word
+   vfd render: your voice over the video                   vfd record: actions wait for their words, at('word')
+                                                           vfd render: re-times the video so each action lands on its word
+            └──────────────────────────────────────┬───────────────────────────┘
+                                                   ▼
+                                      demo/final/demo.mp4
 ```
 
-- **Voice studio** (`voiceover_server.py` + `voiceover.html`): a local teleprompter. It shows
-  one section of `script.md` at a time, what will be on screen, and a suggested duration.
-  Press <kbd>Space</kbd> to move to the next section.
-- **Recorder** (`record.mjs`): drives a headless browser and captures it at a steady 25 fps
-  (Chrome DevTools screencast, cropped to 1920×1080). The cursor moves like a hand: eased, on a
-  slight curve. Scrolls glide, typing has human gaps, and a red dot shows the pointer.
-- **Merge** (`merge.sh`): normalises loudness, puts the voice on each part and joins the parts.
+- **Voice studio** (`vfd studio`): a local teleprompter at http://localhost:8766. It shows one section at a
+  time and what will be on screen. Press <kbd>Space</kbd> to move on, and listen back or redo any part.
+- **Recorder** (`vfd record`): drives a headless browser (Brave if installed, else Chromium) and captures it
+  at a steady frame rate. Each scene stretches or squeezes its pauses to fit your timing.
+- **Render** (`vfd render`): adds the narration, re-times scenes to the words when using a generated voice,
+  and joins the parts into `demo/final/demo.mp4`.
 
 ## Two ways to voice it
 
-**1. Your own recording.** Fast, and it's really you. Scenes stretch or squeeze their pauses
-(0.4× to 2.5×) to fit how long you spoke, so scene changes land within a second or two.
+| | Your own recording (`provider: 'own'`) | Your cloned voice (`provider: 'eleven'`) |
+|---|---|---|
+| Keys | none | `ELEVENLABS_API_KEY` (plan with instant voice cloning) |
+| Sync | scene-level, within a second or two | word-exact: `h.at('Send')` clicks on "Send" |
+| Retakes | re-read the part | edit `spoken-lines.json`, run `vfd make` again |
 
-**2. A cloned voice (or an AI voice), synced to the word.** Your studio takes are uploaded once to
-ElevenLabs as an instant clone of your voice. The clone then reads each line, from
-`spoken-lines.json` if you want natural "um"s and `[pause]` tags (ElevenLabs v3), or from `script.md`.
-`build-voice.mjs` transcribes the result (OpenAI Whisper) to get the time of every word. In your scenes,
-`await at('Generate')` waits for that word, and `warp.mjs` speeds up slow stretches such as page loads
-and typing, or holds a frame, so each logged action starts exactly on its word. No OpenAI or ElevenLabs
-account? Use way 1.
+The **cloned voice** reads `spoken-lines.json`: same meaning as the script, but written the way people talk.
+That means a light "um", `[pause]` tags (ElevenLabs v3), and names spelled as pronounced ("N-eight-N"). Word
+timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock voice instead, styled by
+`voice.style`, with word timings from Whisper.
 
-## Requirements
+## Install
 
-macOS or Linux with Node 18+, Python 3.10+ and ffmpeg. It uses Brave if installed,
-otherwise Playwright's Chromium (or set `BROWSER_PATH`). For way 2: an ElevenLabs plan that
-includes instant voice cloning, and an OpenAI API key for the word timings.
+Node 18+ and ffmpeg (`brew install ffmpeg` or `apt install ffmpeg`). Without Brave, run `npx playwright install chromium` once.
 
 ```bash
-npm install
-npx playwright install chromium   # only if you don't have Brave
+npm install -D voice-first-demo      # or use npx every time
+npx vfd init
+npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
+
+Keys go in `demo/.env` (git-ignored). You only need the ones for features you use:
+
+| Key | Used for |
+|---|---|
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | `vfd draft` writes your script and scenes |
+| `ELEVENLABS_API_KEY` | cloning your voice (key permissions: Text to Speech, Voices write) |
+| `OPENAI_API_KEY` | `provider: 'openai'` voice, and word timings if ElevenLabs can't give them |
 
 ## Usage
 
-1. **Write the script.** `script.md` has `## Part 1` / `## Part 2` headings. Each section starts with a
-   bold on-screen cue like `**[Main chart: hover over a point]**`, followed by the lines to say.
-2. **Record your voice.** `npm run studio`, open http://localhost:8766, pick a part, press Start and read.
-3. **Way 1, your recording:** `npm run record`, then `npm run merge` → `final/demo.mp4`.
-4. **Way 2, cloned voice, synced to the word** (keys in your environment, never in the repo):
-   ```bash
-   npm run record                # once, so each scene's clip exists for the quick preview
-   npm run voice:clone           # clone + speak every line   → final/demo-myvoice.mp4 (section-level sync)
-   npm run voice:words           # voice track + word times   → voice-el/
-   npm run record:synced         # actions wait for their words, timestamps logged
-   npm run warp                  # → final/part1-synced.mp4, final/part2-synced.mp4
-   ```
-   `npm run voice:openai` does the same with an OpenAI stock voice; set `TTS_STYLE` to describe how it should sound.
-
-Your recordings, voices, sessions and videos (`voice/`, `voice-el/`, `tts/`, `out/`, `final/`, `state/`)
-are git-ignored and stay on your machine, apart from the API calls you choose to make in way 2.
+1. **`vfd init`** adds `demo/` with `demo.config.mjs`, `script.md`, `scenes.mjs`, `.env.example` and `.gitignore`.
+   The starter demos this repo's GitHub page, so `vfd make` works right away.
+2. **Point it at your app:** set `appUrl` in `demo.config.mjs`. For pages behind a login, run `vfd session admin`,
+   log in in the window that opens, press Enter, and map parts to sessions: `sessions: { part1: 'admin' }`.
+3. **`vfd draft --about "..." [--pages /dashboard,/settings] [--minutes 3] [--session admin]`** writes the script,
+   the spoken lines and the scenes, plus `DRAFT-NOTES.md` listing what to double-check.
+4. **`vfd studio`** to record your voice. Even with a cloned voice you record once: that's what gets cloned.
+5. **`vfd make`** → `demo/final/demo.mp4`. Or step by step: `vfd voice`, `vfd record`, `vfd render`.
 
 ## Making it yours
 
-Each scene in `record.mjs` is `[name, wordCount, async (page) => { ... }]` and matches one script section.
-Set `APP_URL`, then write the scenes with ordinary Playwright calls and the helpers:
+`script.md` has `## Part` headings. Each section starts with a bold on-screen cue, followed by what you say:
 
-- `await at('word')` waits until that word is spoken (way 2), so the click lands as you say it.
-- `hold(seconds)` is a pause that stretches to fit your timing (way 1).
-- `moveTo`, `moveToEl`, `scrollToText`, `typeHuman`, `clickEl`, `hoverText`, `caption` give human-looking motion.
+```md
+## Part 1: Sending an invoice
+**[Invoice list, click New invoice]**
+Let me create one. I'll pick a client, add two lines, and hit Send.
+```
 
-The included example has the tool demo its own GitHub page, so it runs with no login.
+`scenes.mjs` has one scene per section, written with ordinary Playwright calls plus helpers (`h`):
 
-**Logged-in apps:** start your browser with `--remote-debugging-port=9333`, log in (and stay logged in:
-logging out ends the session), then `SESSION_DOMAINS="yourapp.com" node save-session.mjs part1`. The recorder
-loads `state/<part>.json` automatically. Delete those files when you're done.
+```js
+export default (h) => ({
+  part1: [
+    async (page) => {
+      await h.clickEl(page, page.getByRole('button', { name: 'New invoice' }))   // slow actions first
+      await h.at('client'); await h.hoverText(page, 'Acme Ltd')                    // on the word "client"
+      await h.at('Send');   await h.clickEl(page, page.getByRole('button', { name: 'Send' }))
+    },
+  ],
+})
+```
 
-A few details that took some finding:
-- Brave's headless screencast leaves out the bottom 81 px of the viewport, so the viewport is
-  made taller and the frame is cropped back to 1920×1080.
-- GitHub pages never go fully network-idle, so page loads wait for content, not for the network.
-- Speech is faster than a UI: typing a name and loading a page take longer than saying "I'll open it".
-  Start slow actions early in the section, and let `warp.mjs` absorb the rest (it caps speed-ups at 3×).
-- Write tricky names phonetically in `spoken-lines.json` (for example "N-eight-N"), and check the transcript.
+### Scene helpers
 
-## AI note
+| Helper | What it does |
+|---|---|
+| `at('word')` | wait until that word is spoken in this section (generated voice; no-op for your own recording) |
+| `hold(s)` | a pause that stretches to your pace |
+| `moveTo(page, x, y)`, `moveToEl(page, loc)` | glide the cursor like a hand |
+| `clickEl(page, loc)`, `typeHuman(page, loc, text)` | move, then click; type with human gaps |
+| `scrollSmooth(page, y)`, `scrollToText(page, text)` | eased scrolling |
+| `hoverText(page, text)`, `hoverBadge(page, label)` | point at text; `hoverBadge` picks the right-most match (status badges) |
+| `waitText(page, /re/, s)`, `caption(page, text)` | wait for something to appear; show a caption at the top |
 
-Built with help from Claude Code (Anthropic).
+Optional `export const open = { part2: async (page, h) => ... }` sets where a part starts (default: `appUrl`).
+
+## Tips that took some finding
+
+- Speech is faster than a UI. Typing a name or loading a page takes longer than saying "I'll open it", so start slow
+  actions at the top of a scene. Render speeds stretches up (max 3×) or holds a frame so actions still land on their words.
+- Logging out of the app ends a saved session. Record before logging out, or run `vfd session` again.
+- For a closer accent match, record a minute of natural talk (not reading) in the studio before cloning. Delete
+  `demo/tts/eleven_voice_id.txt` to re-clone.
+- Check product names in the transcript (`demo/tts/<part>.words.json`) and spell them phonetically in `spoken-lines.json`.
+- If your demo sends emails or changes data, point it at a test account. Every `vfd make` runs the scenes for real.
+
+## Contributing
+
+Issues and PRs are welcome: new helpers, more voice providers, Windows support, better drafts. Run
+`node bin/vfd.mjs doctor` in a test project before opening a PR.
+
+## License
+
+MIT. Built with help from Claude Code (Anthropic).

@@ -1,11 +1,5 @@
 node_modules
 __pycache__/
-# Your recordings, voices, sessions and rendered videos stay on your machine
-voice/
-voice-el/
-tts/
-seg/
-out/
-final/
-state/
-.env
+.DS_Store
+# a local demo/ folder used while developing the tool
+demo/

@@ -52,10 +52,7 @@
 <main>
   <header>
     <h1>Voice Studio</h1>
-    <div class="tabs">
-      <button id="tab-part1" class="active">Part 1 · Client pitch</button>
-      <button id="tab-part2">Part 2 · Tech review</button>
-    </div>
+    <div class="tabs" id="tabs"></div>
     <span class="status" id="saved-status"></span>
   </header>
   <p class="lead">
@@ -103,6 +100,7 @@ const LOW = 0.7
 const HIGH = 1.5
 let script = {}
 let part = 'part1'
+let PARTS = [], TITLES = {}
 let sections = []
 let mic = null
 let take = null // { recorder, chunks, t0, starts, i }
@@ -138,7 +136,7 @@ function tick() {
 
 async function load(name) {
   part = name
-  for (const p of ['part1', 'part2']) $('tab-' + p).classList.toggle('active', p === name)
+  for (const p of PARTS) $('tab-' + p).classList.toggle('active', p === name)
   sections = script[name]
   showSection(0)
   $('elapsed').textContent = '0:00'
@@ -153,8 +151,8 @@ async function load(name) {
 
 async function updateSaved() {
   const have = []
-  for (const p of ['part1', 'part2']) {
-    if ((await fetch(`/voice/${p}.marks.json`, { cache: 'no-store' })).ok) have.push(p === 'part1' ? 'Part 1' : 'Part 2')
+  for (const p of PARTS) {
+    if ((await fetch(`/voice/${p}.marks.json`, { cache: 'no-store' })).ok) have.push(TITLES[p].split(':')[0])
   }
   $('saved-status').textContent = have.length ? `Saved: ${have.join(', ')}` : ''
 }
@@ -179,7 +177,7 @@ async function getMic() {
 }
 
 function lockTabs(locked) {
-  for (const p of ['part1', 'part2']) $('tab-' + p).disabled = locked
+  for (const p of PARTS) $('tab-' + p).disabled = locked
 }
 
 async function start() {
@@ -278,12 +276,17 @@ addEventListener('keydown', (e) => {
     advance()
   }
 })
-$('tab-part1').onclick = () => load('part1')
-$('tab-part2').onclick = () => load('part2')
-
+// Tabs come from the script's "## Part" headings, however many there are.
 ;(async () => {
-  script = await (await fetch('/script.json')).json()
-  await load('part1')
+  const data = await (await fetch('/script.json')).json()
+  script = Object.fromEntries(data.parts.map((x) => [x.id, x.sections]))
+  PARTS = data.parts.map((x) => x.id)
+  TITLES = Object.fromEntries(data.parts.map((x) => [x.id, x.title]))
+  for (const x of data.parts) {
+    const b = document.createElement('button'); b.id = 'tab-' + x.id; b.textContent = x.title
+    b.onclick = () => load(x.id); $('tabs').appendChild(b)
+  }
+  await load(PARTS[0])
   requestAnimationFrame(tick)
 })()
 </script>

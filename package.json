@@ -1,19 +1,21 @@
 {
   "name": "voice-first-demo",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Narrated product demo videos for your app: record your voice first (or clone it), and the screen recording builds itself around your words.",
   "type": "module",
-  "scripts": {
-    "studio": "python3 voiceover_server.py",
-    "record": "node record.mjs all",
-    "merge": "sh merge.sh",
-    "voice:clone": "TTS=eleven node tts-remap.mjs",
-    "voice:openai": "node tts-remap.mjs",
-    "voice:words": "node build-voice.mjs",
-    "record:synced": "VOICE_DIR=voice-el node record.mjs all",
-    "warp": "node warp.mjs part1 part2"
+  "bin": {
+    "vfd": "bin/vfd.mjs",
+    "voice-first-demo": "bin/vfd.mjs"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.56.1"
+  "files": ["bin", "src", "templates", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "playwright": "^1.65.0"
   },
-  "description": "Record your voice first; the screen recording builds itself around your timing."
+  "keywords": ["demo-video", "screen-recording", "playwright", "voice-clone", "elevenlabs", "text-to-speech", "claude", "product-demo", "cli"],
+  "repository": { "type": "git", "url": "git+https://github.com/Ajay702/voice-first-demo.git" },
+  "homepage": "https://github.com/Ajay702/voice-first-demo#readme",
+  "author": "Ajay Raghav",
+  "license": "MIT"
 }

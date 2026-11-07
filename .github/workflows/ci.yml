@@ -27,8 +27,8 @@ jobs:
         shell: bash
         run: |
           mkdir smoke && cd smoke
-          node ../bin/talkthrough.mjs init
-          node ../bin/talkthrough.mjs doctor || true
-          node ../bin/talkthrough.mjs record --part part1
+          node ../bin/vfd.mjs init
+          node ../bin/vfd.mjs doctor || true
+          node ../bin/vfd.mjs record --part part1
           ls -la demo/out
           test -s demo/out/part1.mp4

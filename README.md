@@ -1,10 +1,10 @@
-# talkthrough
+# voice-first-demo
 
-[![ci](https://github.com/Ajay702/talkthrough/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/talkthrough/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+[![ci](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Ajay702/voice-first-demo/actions/workflows/ci.yml) ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 
 <p align="center">
-  <a href="https://github.com/Ajay702/talkthrough/blob/main/docs/demo.mp4"><img src="https://raw.githubusercontent.com/Ajay702/talkthrough/main/docs/demo.gif" alt="talkthrough setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
-  <sub>▶ <a href="https://github.com/Ajay702/talkthrough/blob/main/docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with talkthrough itself, narrated in the author's cloned voice.</sub>
+  <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><img src="https://raw.githubusercontent.com/Ajay702/voice-first-demo/main/docs/demo.gif" alt="voice-first-demo setting itself up: init, doctor, draft with Claude, make, and the finished video" width="820"></a><br>
+  <sub>▶ <a href="https://github.com/Ajay702/voice-first-demo/blob/main/docs/demo.mp4"><b>Watch the 1-minute video with sound</b></a>. It was made with voice-first-demo itself, narrated in the author's cloned voice.</sub>
 </p>
 
 **Narrated product demo videos for your app, without the editing.** Hiring assignments, launches,
@@ -12,10 +12,11 @@ client handoffs and PR reviews all ask for "a short video walking through it". T
 running app: you talk (or your cloned voice does), and the screen recording builds itself around your words.
 
 ```bash
-npx talkthrough init         # adds a demo/ folder
-npx talkthrough draft --about "invoicing app for freelancers: create and send an invoice"
-npx talkthrough studio       # read the script aloud once
-npx talkthrough make         # → demo/final/demo.mp4
+npm install -D voice-first-demo     # adds the `vfd` command to your project
+npx vfd init                        # adds a demo/ folder
+npx vfd draft --about "invoicing app for freelancers: create and send an invoice"
+npx vfd studio                      # read the script aloud once
+npx vfd make                        # → demo/final/demo.mp4
 ```
 
 - **Voice first.** Record narration at your own pace in a little teleprompter. No more re-recording the screen because you stumbled.
@@ -27,26 +28,25 @@ npx talkthrough make         # → demo/final/demo.mp4
 ## How it works
 
 ```
-your app ──► draft (Claude/OpenAI) ──► script.md + scenes.mjs + spoken-lines.json
-                                          │
-                 studio (teleprompter) ──► your voice, section by section
-                                          │
-            ┌─────────────────────────────┴──────────────────────────────┐
-            ▼ voice.provider: 'own'                                      ▼ 'eleven' (your cloned voice) / 'openai'
-   record: scenes paced to your recording             voice:  speaks each line + time of every word
-   render: your voice over the video                  record: actions wait for their words, at('word')
-                                                      render: re-times the video so each action lands on its word
-            └─────────────────────────────┬──────────────────────────────┘
-                                          ▼
-                                 demo/final/demo.mp4
+your app ──► vfd draft (Claude/OpenAI) ──► script.md + scenes.mjs + spoken-lines.json
+                                                   │
+                vfd studio (Voice studio: teleprompter) ──► your voice, section by section
+                                                   │
+            ┌──────────────────────────────────────┴───────────────────────────┐
+            ▼ voice.provider: 'own'                                             ▼ 'eleven' (your cloned voice) / 'openai'
+   vfd record: scenes paced to your recording              vfd voice: speaks each line + time of every word
+   vfd render: your voice over the video                   vfd record: actions wait for their words, at('word')
+                                                           vfd render: re-times the video so each action lands on its word
+            └──────────────────────────────────────┬───────────────────────────┘
+                                                   ▼
+                                      demo/final/demo.mp4
 ```
-Each box is a command: `npx talkthrough draft`, `npx talkthrough studio`, and so on.
 
-- **Voice studio** (`talkthrough studio`): a local teleprompter at http://localhost:8766. It shows one section at a
+- **Voice studio** (`vfd studio`): a local teleprompter at http://localhost:8766. It shows one section at a
   time and what will be on screen. Press <kbd>Space</kbd> to move on, and listen back or redo any part.
-- **Recorder** (`talkthrough record`): drives a headless browser (Brave if installed, else Chromium) and captures it
+- **Recorder** (`vfd record`): drives a headless browser (Brave if installed, else Chromium) and captures it
   at a steady frame rate. Each scene stretches or squeezes its pauses to fit your timing.
-- **Render** (`talkthrough render`): adds the narration, re-times scenes to the words when using a generated voice,
+- **Render** (`vfd render`): adds the narration, re-times scenes to the words when using a generated voice,
   and joins the parts into `demo/final/demo.mp4`.
 
 ## Two ways to voice it
@@ -55,9 +55,9 @@ Each box is a command: `npx talkthrough draft`, `npx talkthrough studio`, and so
 |---|---|---|
 | Keys | none | `ELEVENLABS_API_KEY` (plan with instant voice cloning) |
 | Sync | scene-level, within a second or two | word-exact: `h.at('Send')` clicks on "Send" |
-| Retakes | re-read the part | edit `spoken-lines.json`, run `talkthrough make` again |
+| Retakes | re-read the part | edit `spoken-lines.json`, run `vfd make` again |
 
-**Whose voice?** Always yours: the clone is made from what *you* record in `talkthrough studio`, in *your* ElevenLabs
+**Whose voice?** Always yours: the clone is made from what *you* record in `vfd studio`, in *your* ElevenLabs
 account, with *your* key. Only clone your own voice, or one you have explicit permission to use (ElevenLabs' terms
 require this). Delete the clone from your ElevenLabs Voices page whenever you like.
 
@@ -71,37 +71,38 @@ timings come straight from ElevenLabs. `provider: 'openai'` uses an OpenAI stock
 Node 18+ and ffmpeg (`brew install ffmpeg`, `apt install ffmpeg`, or `winget install ffmpeg` on Windows). Without Brave, run `npx playwright install chromium` once.
 
 ```bash
-npx talkthrough init
-npx talkthrough doctor       # checks ffmpeg, browser, keys, script ↔ scenes
+npm install -D voice-first-demo      # then `npx vfd …` runs this project's copy
+npx vfd init
+npx vfd doctor                        # checks ffmpeg, browser, keys, script ↔ scenes
 ```
 
-To pin a version per project, `npm install -D talkthrough` once; `npx talkthrough …` then runs that copy.
-(It used to be called `voice-first-demo`, with a `vfd` command. That package now just points here.)
+Not installing it? Use the full name every time: `npx voice-first-demo init`, `npx voice-first-demo make`, and so on.
+(A bare `npx vfd` without the install would fetch an unrelated npm package that happens to be called `vfd`.)
 
 > **Windows:** supported. Every push runs install, `init`, `doctor` and a real screen recording on Windows,
 > macOS and Linux in CI. Voice cloning, `draft` and `render` share the same code but have mainly been used on
 > macOS, so if anything fails on Windows (most likely ffmpeg not on `PATH`, or a browser that won't launch headless),
-> run `npx talkthrough doctor` and [open an issue](https://github.com/Ajay702/talkthrough/issues) with its output.
+> run `npx vfd doctor` and [open an issue](https://github.com/Ajay702/voice-first-demo/issues) with its output.
 
-Keys go in `demo/.env` (git-ignored); `npx talkthrough key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
+Keys go in `demo/.env` (git-ignored); `npx vfd key ELEVENLABS_API_KEY` asks for one with hidden input and saves it there. You only need the ones for features you use:
 
 | Key | Used for |
 |---|---|
-| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | `talkthrough draft` writes your script and scenes |
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | `vfd draft` writes your script and scenes |
 | `ELEVENLABS_API_KEY` | cloning your voice (key permissions: Text to Speech, Voices write) |
 | `OPENAI_API_KEY` | `provider: 'openai'` voice, and word timings if ElevenLabs can't give them |
 
 ## Usage
 
-1. **`talkthrough init`** adds `demo/` with `demo.config.mjs`, `script.md`, `scenes.mjs`, `.env.example` and `.gitignore`.
-   The starter demos this repo's GitHub page, so `talkthrough make` works right away.
-2. **Point it at your app:** set `appUrl` in `demo.config.mjs`. For pages behind a login, run `talkthrough session admin`,
+1. **`vfd init`** adds `demo/` with `demo.config.mjs`, `script.md`, `scenes.mjs`, `.env.example` and `.gitignore`.
+   The starter demos this repo's GitHub page, so `vfd make` works right away.
+2. **Point it at your app:** set `appUrl` in `demo.config.mjs`. For pages behind a login, run `vfd session admin`,
    log in in the window that opens, press Enter, and map parts to sessions: `sessions: { part1: 'admin' }`.
-3. **`talkthrough draft --about "..." [--pages /dashboard,/account@customer] [--minutes 3] [--session admin]`** writes the script
+3. **`vfd draft --about "..." [--pages /dashboard,/account@customer] [--minutes 3] [--session admin]`** writes the script
    (`@customer` looks at that page as the saved `customer` session),
    the spoken lines and the scenes, plus `DRAFT-NOTES.md` listing what to double-check.
-4. **`talkthrough studio`** to record your voice. Even with a cloned voice you record once: that's what gets cloned.
-5. **`talkthrough make`** → `demo/final/demo.mp4`. Or step by step: `talkthrough voice`, `talkthrough record`, `talkthrough render`.
+4. **`vfd studio`** to record your voice. Even with a cloned voice you record once: that's what gets cloned.
+5. **`vfd make`** → `demo/final/demo.mp4`. Or step by step: `vfd voice`, `vfd record`, `vfd render`.
 
 ## Making it yours
 
@@ -145,17 +146,17 @@ Optional `export const open = { part2: async (page, h) => ... }` sets where a pa
 
 - Speech is faster than a UI. Typing a name or loading a page takes longer than saying "I'll open it", so start slow
   actions at the top of a scene. Render speeds stretches up (max 3×) or holds a frame so actions still land on their words.
-- Logging out of the app ends a saved session. Record before logging out, or run `talkthrough session` again.
+- Logging out of the app ends a saved session. Record before logging out, or run `vfd session` again.
 - For a closer accent match, record a minute of natural talk (not reading) in the studio before cloning. Delete
   `demo/tts/eleven_voice_id.txt` to re-clone.
 - Check product names in the transcript (`demo/tts/<part>.words.json`) and spell them phonetically in `spoken-lines.json`.
-- If your demo sends emails or changes data, point it at a test account. Every `talkthrough make` runs the scenes for real.
+- If your demo sends emails or changes data, point it at a test account. Every `vfd make` runs the scenes for real.
 - Reset state between scenes by reloading the page. Many apps' "Clear filters" buttons leave the inputs filled.
 
 ## Contributing
 
 Issues and PRs are welcome: new helpers, more voice providers, Windows support, better drafts. Run
-`node bin/talkthrough.mjs doctor` in a test project before opening a PR.
+`node bin/vfd.mjs doctor` in a test project before opening a PR.
 
 ## License
 

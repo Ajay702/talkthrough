@@ -1,9 +1,9 @@
-// talkthrough settings for this project. Keys go in demo/.env (git-ignored), never here.
+// voice-first-demo settings for this project. Keys go in demo/.env (git-ignored), never here.
 export default {
   // Where the recorder starts. Scenes can navigate anywhere from here.
-  appUrl: 'https://github.com/Ajay702/talkthrough',
+  appUrl: 'https://github.com/Ajay702/voice-first-demo',
 
-  // Logged-in pages: run `talkthrough session admin` once, then map parts to sessions.
+  // Logged-in pages: run `vfd session admin` once, then map parts to sessions.
   sessions: {
     // part1: 'admin',
   },
@@ -18,6 +18,6 @@ export default {
     // style: 'Warm, relaxed developer showing a project to a colleague. Light Indian English accent.',
   },
 
-  // Who writes the first draft in `talkthrough draft`: 'auto' uses Claude if ANTHROPIC_API_KEY is set, else OpenAI.
+  // Who writes the first draft in `vfd draft`: 'auto' uses Claude if ANTHROPIC_API_KEY is set, else OpenAI.
   llm: { provider: 'auto' /*, anthropicModel: 'claude-opus-5-5', openaiModel: 'gpt-4.1' */ },
 }

@@ -1,4 +1,4 @@
-// "talkthrough session <name> [<name>…]": opens one browser window per name at your app (each with its own profile,
+// "vfd session <name> [<name>…]": opens one browser window per name at your app (each with its own profile,
 // so being logged in as one user never logs out another), you log in, then press Enter (or create the
 // --until file), and each session is saved to demo/state/<name>.json for the headless recorder.
 // Nothing leaves your machine.
@@ -39,5 +39,5 @@ export async function saveSession({ dir, config, names, url, until }) {
     console.log(`saved ${file}`)
   }
   console.log(`Map parts to sessions in demo.config.mjs, e.g. sessions: { part1: '${names[0]}' }.`)
-  console.log('Logging out of the app later ends a session; just run "talkthrough session" again.')
+  console.log('Logging out of the app later ends a session; just run "vfd session" again.')
 }

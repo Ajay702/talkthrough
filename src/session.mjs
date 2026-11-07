@@ -10,7 +10,7 @@ const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
 
 export async function saveSession({ dir, config, name, url }) {
   const p = paths(dir)
-  const ctx = await chromium.launchPersistentContext(join(ensure(p.state), '.browser'), {
+  const ctx = await chromium.launchPersistentContext(join(ensure(p.state), `.browser-${name}`) /* one profile per session: logging in as someone else never logs this one out */, {
     headless: false, viewport: null, executablePath: config.browserPath ?? (existsSync(BRAVE) ? BRAVE : undefined) })
   const page = ctx.pages()[0] ?? (await ctx.newPage())
   await page.goto(url ?? config.appUrl)
